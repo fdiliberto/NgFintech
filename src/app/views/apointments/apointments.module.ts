@@ -6,11 +6,13 @@ import {MaterialModule} from '../../shared/material.module';
 import {SharedModule} from '../../shared/shared.module';
 import {ApointmentFormComponent} from './apointment-form/apointment-form.component';
 import {ReactiveFormsModule} from '@angular/forms';
+import {ApointmentConfirmDialogComponent} from './apointment-form/apointment-confirm-dialog.component';
 
 @NgModule({
     declarations: [
         ApointmentsComponent,
-        ApointmentFormComponent
+        ApointmentFormComponent,
+        ApointmentConfirmDialogComponent
     ],
     imports: [
         CommonModule,

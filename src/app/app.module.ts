@@ -4,7 +4,7 @@ import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {CoreModule} from './core/core.module';
-import {HttpClientModule} from '@angular/common/http';
+import {HttpClientModule, HttpClientXsrfModule} from '@angular/common/http';
 /**
  * LOCALIZZAZIONE
  */
@@ -22,7 +22,12 @@ registerLocaleData(localeIt, 'it');
         AppRoutingModule,
         BrowserAnimationsModule,
         CoreModule,
-        HttpClientModule
+        HttpClientModule,
+        // Valori di default per autenticazione con COOKIES:
+        HttpClientXsrfModule.withOptions({
+            cookieName: 'XSRF-TOKEN',
+            headerName: 'X-XSRF-TOKEN',
+        })
     ],
     providers: [
         {

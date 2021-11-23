@@ -1,6 +1,11 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
 import {FormBuilder, Validators} from '@angular/forms';
 import {DayWithSlot} from '../../../models/day-with-slot.model';
+import {DateFilterFn, MatDatepickerInputEvent} from '@angular/material/datepicker';
+import {DayWithSlots} from '../../../models/day-with-slots.model';
+import {dateToString} from '../../../shared/utils/date.utils';
+import {from, Observable} from 'rxjs';
+import {filter, map} from 'rxjs/operators';
 
 @Component({
     selector: 'fd-apointment-form',
@@ -12,7 +17,8 @@ import {DayWithSlot} from '../../../models/day-with-slot.model';
         <form [formGroup]="apointmentForm" (ngSubmit)="submit()">
             <mat-form-field appearance="fill" class="d-block mb-2">
                 <mat-label>Choose a date</mat-label>
-                <input matInput [matDatepicker]="picker" formControlName="date" [min]="today">
+                <input matInput [matDatepicker]="picker" formControlName="date" [min]="today"
+                       [matDatepickerFilter]="filterAvailability" (dateChange)="changeDateHandler($event)">
                 <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
                 <mat-datepicker #picker></mat-datepicker>
                 <mat-error *ngIf="dataControl!.hasError('required')">
@@ -22,11 +28,8 @@ import {DayWithSlot} from '../../../models/day-with-slot.model';
             <mat-form-field appearance="fill" class="d-block mb-2">
                 <mat-label>Orario</mat-label>
                 <mat-select formControlName="slot">
-                    <!--                    <mat-select-trigger>-->
-                    <!--                        <mat-icon [inline]="true">access_time</mat-icon>-->
-                    <!--                    </mat-select-trigger>-->
-                    <mat-option *ngFor="let slot of 24 | time" [value]="slot">
-                        {{slot < 10 ? '0' + slot : slot}}:00
+                    <mat-option *ngFor="let t of time$ | async" [value]="t">
+                        {{t | timeString}}
                     </mat-option>
                 </mat-select>
                 <mat-error *ngIf="slotControl!.hasError('required')">
@@ -45,9 +48,12 @@ import {DayWithSlot} from '../../../models/day-with-slot.model';
     styles: [],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ApointmentFormComponent implements OnInit {
+export class ApointmentFormComponent {
+    @Input() availability: DayWithSlots[] = [];
     @Output() bookDay = new EventEmitter<DayWithSlot>();
     @Output() cancel = new EventEmitter<void>();
+
+    time$: Observable<Array<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24>> | null = null;
 
     apointmentForm = this.fb.group({
         date: ['', Validators.required],
@@ -67,18 +73,13 @@ export class ApointmentFormComponent implements OnInit {
     constructor(private fb: FormBuilder) {
     }
 
-    ngOnInit(): void {
-    }
-
     submit() {
         if (this.apointmentForm.valid) {
             const {date, slot} = this.apointmentForm.value;
-            // TODO
             const d: DayWithSlot = {
                 day: (date as Date).toLocaleDateString(),
                 slot
             }
-            console.log(d);
             this.bookDay.emit(d);
         }
     }
@@ -88,5 +89,22 @@ export class ApointmentFormComponent implements OnInit {
         this.apointmentForm.markAsPristine();
         this.apointmentForm.markAsUntouched();
         this.apointmentForm.updateValueAndValidity();
+    }
+
+    filterAvailability: DateFilterFn<Date | null> = (date: Date | null) => {
+        if (date && this.availability.length) {
+            const currentDate = dateToString(date);
+            return this.availability.findIndex(i => i.day === currentDate) > -1;
+        }
+        return true;
+    };
+
+    changeDateHandler(dataEvent: MatDatepickerInputEvent<Date, Date | null>) {
+        if (dataEvent && dataEvent.value) {
+            this.time$ = from(this.availability).pipe(
+                filter(f => f.day === dateToString(dataEvent.value as Date)),
+                map(m => m.slots)
+            )
+        }
     }
 }

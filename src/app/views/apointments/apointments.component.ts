@@ -4,7 +4,13 @@ import {LeafletOptions} from '../../shared/components/leaflet-map/leaflet-option
 import {ApointmentsService} from '../../api/apointments.service';
 import {MatDrawer} from '@angular/material/sidenav';
 import {MatSelectionList} from '@angular/material/list';
-import {skip} from 'rxjs/operators';
+import {filter, map, skip, switchMap, switchMapTo, tap} from 'rxjs/operators';
+import {DayWithSlots} from '../../models/day-with-slots.model';
+import {BehaviorSubject, EMPTY, Observable, observable, of, Subscription} from 'rxjs';
+import {DayWithSlot} from '../../models/day-with-slot.model';
+import {MatDialog} from '@angular/material/dialog';
+import {ApointmentConfirmDialogComponent} from './apointment-form/apointment-confirm-dialog.component';
+import {MatSnackBar} from '@angular/material/snack-bar';
 
 @Component({
     selector: 'fd-apointments',
@@ -16,10 +22,12 @@ import {skip} from 'rxjs/operators';
                     <!-- workaround con if per evitare che il form rimanga validato e mostri gli errori -->
                     <fd-apointment-form
                             *ngIf="drawer.opened"
-                            (cancel)="cancelApointmentHandler()">
+                            [availability]="slots"
+                            (bookDay)="bookDayHandler($event)"
+                            (cancel)="resetApointmentHandler()">
                         <fd-leaflet-map
-                                *ngIf="locationSelected"
-                                [position]="getPosition()"
+                                *ngIf="leafletOptions"
+                                [position]="leafletOptions"
                                 [height]="400"
                                 [zoom]="12">
                         </fd-leaflet-map>
@@ -53,38 +61,65 @@ export class ApointmentsComponent implements OnInit {
     @ViewChild('drawer', {static: true}) drawer!: MatDrawer;
     @ViewChild('locationsList', {static: true}) locationsList!: MatSelectionList;
 
-    locationSelected: Location | null = null;
+    locationSelected$ = new BehaviorSubject<Location | null>(null);
+    leafletOptions: LeafletOptions | null = null;
 
-    constructor(public apointmentsService: ApointmentsService) {
+    slots: DayWithSlots[] = [];
+
+    sub = new Subscription();
+
+    constructor(public apointmentsService: ApointmentsService,
+                private dialog: MatDialog,
+                private snackBar: MatSnackBar) {
     }
 
     ngOnInit(): void {
         this.apointmentsService.getLoctions();
-        this.apointmentsService.slots$.pipe(
+
+        this.sub = this.apointmentsService.slots$.pipe(
             skip(1)
         ).subscribe(slots => {
+            this.slots = slots;
             this.drawer.open();
-            console.log(slots);
         });
-    }
 
-    getPosition() {
-        if (this.locationSelected) {
-            return {
-                latLng: [this.locationSelected?.coords[0], this.locationSelected?.coords[1]],
-                markerText: this.locationSelected.address
-            } as LeafletOptions
-        }
-        return null;
+        this.locationSelected$.pipe(
+            skip(1),
+            map(loc => {
+                if (loc) {
+                    return {
+                        latLng: [loc.coords[0], loc.coords[1]],
+                        markerText: loc.address
+                    } as LeafletOptions
+                }
+                return null;
+            }),
+        ).subscribe(options => this.leafletOptions = options);
     }
 
     changeLocationHandler(loc: Location) {
-        this.locationSelected = loc;
+        this.locationSelected$.next(loc);
         this.apointmentsService.getSlotsByLocationId(+loc._id);
     }
 
-    cancelApointmentHandler() {
+    resetApointmentHandler() {
         this.locationsList.deselectAll();
         this.drawer.close();
+    }
+
+    bookDayHandler(day: DayWithSlot) {
+        const dialogRef = this.dialog.open(ApointmentConfirmDialogComponent, {data: day});
+        dialogRef.afterClosed().pipe(
+            filter(confirmed => (confirmed as boolean)),
+            switchMapTo(this.apointmentsService.bookApointment(day)),
+            map(success => {
+                return success
+                    ? 'Appuntamento registrato con successo'
+                    : 'Spiacente, si sono vericati errori. Riprova più tardi.';
+            })
+        ).subscribe(msg => {
+            this.snackBar.open(msg, undefined, {duration: 2000});
+            this.resetApointmentHandler();
+        });
     }
 }
