@@ -14,56 +14,52 @@ import {LeafletOptions} from './leaflet-options.model';
 @Component({
     selector: 'fd-leaflet-map',
     template: `
-        <div #host class="w-auto border border-3 mb-3" style="height: 300px;"></div>
+        <div #host class="w-auto border border-3 mb-3"></div>
     `,
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LeafletMapComponent implements OnInit, OnChanges {
     @ViewChild('host', {static: true}) host!: ElementRef<HTMLDivElement>;
-    @Input() position!: LeafletOptions | null;
-    @Input() zoom: number = 5;
-    @Input() height: number | null = null;
+    @Input() options!: LeafletOptions;
 
-    map!: L.Map;
-    marker!: L.Marker;
+    private defaultZoom = 15;
+    private defaultHeight = 300;
+    private map!: L.Map;
+    private marker!: L.Marker;
 
     ngOnInit() {
-        if (!this.position) {
+        if (!this.options) {
             throw new Error('Passare configurazione per inizializzare il componente');
         }
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes.position && changes.position.firstChange && this.position) {
-            const coords: L.LatLngExpression = this.position.latLng as L.LatLngExpression;
+        if (changes.options) {
+            const currentOptions = changes.options.currentValue;
+            const coords: L.LatLngExpression = currentOptions.latLng as L.LatLngExpression;
+            const zoom = currentOptions.zoom || this.defaultZoom;
+            const height = currentOptions.height || this.defaultHeight;
 
-            if (this.height) {
-                this.host.nativeElement.setAttribute('style', `height:${this.height}px`);
+            if (changes.options.firstChange) {
+                // imposto altezza div
+                this.host.nativeElement.setAttribute('style', `height:${height}px`);
+
+                // set della mappa iniziale
+                this.map = L.map(this.host.nativeElement).setView(coords, zoom);
+
+                //aggiunta del layer sulla mappa
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+
+                // aggiunta marker
+                if (this.options.markerText) {
+                    this.marker = L.marker(coords).addTo(this.map)
+                        .bindPopup(this.options.markerText)
+                        .openPopup();
+                }
+            } else {
+                this.map.setView(coords);
+                this.marker.setLatLng(coords);
             }
-
-            this.map = L.map(this.host.nativeElement).setView(coords, this.zoom);
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(
-                this.map
-            );
-
-            if (this.position.markerText) {
-                this.marker = L.marker(coords)
-                    .addTo(this.map)
-                    .bindPopup(this.position.markerText)
-                    .openPopup();
-            }
-        }
-
-        if (changes.coords && !changes.coords.firstChange && this.position) {
-            const coords: L.LatLngExpression = this.position
-                .latLng as L.LatLngExpression;
-            this.map.setView(coords);
-            this.marker.setLatLng(coords);
-        }
-
-        if (changes.zoom) {
-            this.map.setZoom(changes.zoom.currentValue);
         }
     }
 }

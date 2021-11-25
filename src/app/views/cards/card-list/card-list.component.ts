@@ -39,7 +39,7 @@ import {Card} from '../../../models/card.model';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CardListComponent {
-    @Input() cards: Card[] = []
+    @Input() cards: Card[] | null = []
     @Output() viewMovements = new EventEmitter<number>();
     @Output() delete = new EventEmitter<number>();
     @Output() addCard = new EventEmitter<void>();

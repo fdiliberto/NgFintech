@@ -45,11 +45,11 @@ import {requiredLengthValidator} from '../validators/requiredLength.validator';
             </mat-form-field>
             <mat-form-field appearance="fill" class="d-block mb-2">
                 <mat-label>CVV</mat-label>
-                <input type="text" formControlName="cvv" matInput>
-                <mat-error *ngIf="cvvControl!.hasError('required')">
+                <input type="text" formControlName="csc" matInput>
+                <mat-error *ngIf="cscControl!.hasError('required')">
                     Codice CVV <strong>richiesto</strong>
                 </mat-error>
-                <mat-error *ngIf="!cvvControl!.hasError('required') && cvvControl!.errors?.requiredLength">
+                <mat-error *ngIf="!cscControl!.hasError('required') && cscControl!.errors?.requiredLength">
                     Il codice CVV deve essere di <strong>3 caratteri</strong>
                 </mat-error>
             </mat-form-field>
@@ -74,7 +74,7 @@ export class CardFormComponent {
         name: ['', Validators.required],
         surname: ['', Validators.required],
         number: ['', [Validators.required, requiredLengthValidator(16)]],
-        cvv: ['', [Validators.required, requiredLengthValidator(3)]],
+        csc: ['', [Validators.required, requiredLengthValidator(3)]],
     });
 
 
@@ -94,8 +94,8 @@ export class CardFormComponent {
         return this.cardForm.get('number');
     }
 
-    get cvvControl() {
-        return this.cardForm.get('cvv');
+    get cscControl() {
+        return this.cardForm.get('csc');
     }
 
     constructor(private fb: FormBuilder) {

@@ -3,5 +3,5 @@ export interface CardCreate {
     name: string;
     surname: string;
     number: string;
-    cvv: string;
+    csc: string;
 }

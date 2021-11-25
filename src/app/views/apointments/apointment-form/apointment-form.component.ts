@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output} from '@angular/core';
 import {FormBuilder, Validators} from '@angular/forms';
 import {DayWithSlot} from '../../../models/day-with-slot.model';
 import {DateFilterFn, MatDatepickerInputEvent} from '@angular/material/datepicker';
@@ -49,7 +49,7 @@ import {filter, map} from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ApointmentFormComponent {
-    @Input() availability: DayWithSlots[] = [];
+    @Input() availability: DayWithSlots[] | null = [];
     @Output() bookDay = new EventEmitter<DayWithSlot>();
     @Output() cancel = new EventEmitter<void>();
 
@@ -92,7 +92,7 @@ export class ApointmentFormComponent {
     }
 
     filterAvailability: DateFilterFn<Date | null> = (date: Date | null) => {
-        if (date && this.availability.length) {
+        if (date && this.availability?.length) {
             const currentDate = dateToString(date);
             return this.availability.findIndex(i => i.day === currentDate) > -1;
         }
@@ -100,7 +100,7 @@ export class ApointmentFormComponent {
     };
 
     changeDateHandler(dataEvent: MatDatepickerInputEvent<Date, Date | null>) {
-        if (dataEvent && dataEvent.value) {
+        if (dataEvent && dataEvent.value && this.availability) {
             this.time$ = from(this.availability).pipe(
                 filter(f => f.day === dateToString(dataEvent.value as Date)),
                 map(m => m.slots)

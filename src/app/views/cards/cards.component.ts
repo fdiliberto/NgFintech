@@ -2,6 +2,9 @@ import {Component, ComponentRef, ElementRef, OnInit, ViewChild} from '@angular/c
 import {Card} from '../../models/card.model';
 import {CardCreate} from '../../models/card-create.model';
 import {CardFormComponent} from './card-form/card-form.component';
+import {CardsService} from '../../api/cards.service';
+import {BehaviorSubject} from 'rxjs';
+import {MatSnackBar} from '@angular/material/snack-bar';
 
 @Component({
     selector: 'fd-cards',
@@ -24,7 +27,7 @@ import {CardFormComponent} from './card-form/card-form.component';
                 </fd-intro-page>
                 <mat-card class="col-md-8 offset-md-2 animate__animated animate__fadeIn">
                     <fd-card-list
-                            [cards]="cards"
+                            [cards]="cards$ | async"
                             (viewMovements)="viewMovementsHandler($event)"
                             (delete)="deleteMovementsHandler($event)"
                             (addCard)="drawer.open()">
@@ -38,29 +41,14 @@ import {CardFormComponent} from './card-form/card-form.component';
 export class CardsComponent implements OnInit {
     @ViewChild(CardFormComponent) cardFormComp!: CardFormComponent;
 
-    cards: Card[] = [
-        {
-            number: '12345 56879 22222 12145',
-            type: 'visa',
-            amount: 145785,
-            owner: '',
-            ownerId: '1',
-            _id: '1'
-        },
-        {
-            number: '12345 56879 22222 12145',
-            type: 'mastercard',
-            amount: 6547899,
-            owner: '',
-            ownerId: '1',
-            _id: '2'
-        }
-    ];
+    cards$ = new BehaviorSubject<Card[]>([]);
+    selectedCardId$ = new BehaviorSubject<string>('');
 
-    constructor() {
+    constructor(private cardService: CardsService, private snackBar: MatSnackBar) {
     }
 
     ngOnInit(): void {
+        this.cardService.getCards().subscribe(cards => this.cards$.next(cards));
     }
 
     viewMovementsHandler(idCard: number) {
@@ -74,8 +62,13 @@ export class CardsComponent implements OnInit {
     addCard(cardToCreate: CardCreate) {
         if (cardToCreate) {
             // reset del form figlio
-            this.cardFormComp.cleanup();
-            console.log(' add card', cardToCreate);
+            const childForm = this.cardFormComp;
+            this.cardService.createCard(cardToCreate).subscribe(cardCreated => {
+                this.snackBar.open('Carta aggiunta con successo', undefined, {duration: 2000});
+                const cards = [...this.cards$.getValue(), cardCreated];
+                this.cards$.next(cards);
+                childForm.cleanup();
+            })
         }
     }
 }

@@ -1,16 +1,16 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {Location} from '../../models/location.model';
 import {LeafletOptions} from '../../shared/components/leaflet-map/leaflet-options.model';
-import {ApointmentsService} from '../../api/apointments.service';
 import {MatDrawer} from '@angular/material/sidenav';
 import {MatSelectionList} from '@angular/material/list';
-import {filter, map, skip, switchMap, switchMapTo, tap} from 'rxjs/operators';
+import {filter, map, switchMap, switchMapTo} from 'rxjs/operators';
 import {DayWithSlots} from '../../models/day-with-slots.model';
-import {BehaviorSubject, EMPTY, Observable, observable, of, Subscription} from 'rxjs';
+import {BehaviorSubject, Observable, Subscription} from 'rxjs';
 import {DayWithSlot} from '../../models/day-with-slot.model';
 import {MatDialog} from '@angular/material/dialog';
 import {ApointmentConfirmDialogComponent} from './apointment-form/apointment-confirm-dialog.component';
 import {MatSnackBar} from '@angular/material/snack-bar';
+import {ApointmentsService} from '../../api/apointments.service';
 
 @Component({
     selector: 'fd-apointments',
@@ -20,18 +20,14 @@ import {MatSnackBar} from '@angular/material/snack-bar';
                         [disableClose]="true">
                 <div class="m-3">
                     <!-- workaround con if per evitare che il form rimanga validato e mostri gli errori -->
-                    <fd-apointment-form
-                            *ngIf="drawer.opened"
-                            [availability]="slots"
-                            (bookDay)="bookDayHandler($event)"
-                            (cancel)="resetApointmentHandler()">
-                        <fd-leaflet-map
-                                *ngIf="leafletOptions"
-                                [position]="leafletOptions"
-                                [height]="400"
-                                [zoom]="12">
-                        </fd-leaflet-map>
-                    </fd-apointment-form>
+                    <ng-container *ngIf="appointment$ | async as apt">
+                        <fd-apointment-form *ngIf="apt.slots.length"
+                                            [availability]="apt.slots"
+                                            (bookDay)="bookDayHandler($event)"
+                                            (cancel)="resetApointmentHandler()">
+                            <fd-leaflet-map [options]="apt.leafletOpt"></fd-leaflet-map>
+                        </fd-apointment-form>
+                    </ng-container>
                 </div>
             </mat-drawer>
             <mat-drawer-content [ngClass]="{'vh-100': drawer.opened}">
@@ -40,8 +36,8 @@ import {MatSnackBar} from '@angular/material/snack-bar';
                 </fd-intro-page>
                 <mat-card class="col-md-8 offset-md-2 animate__animated animate__fadeIn">
                     <mat-selection-list #locationsList [multiple]="false">
-                        <mat-list-option *ngFor="let loc of apointmentsService.locations$ | async" [value]="loc._id"
-                                         (click)="changeLocationHandler(loc)">
+                        <mat-list-option *ngFor="let loc of locations$ | async" [value]="loc._id"
+                                         (click)="drawer.open(); selectedLocation$.next(loc)">
                             <mat-icon matListIcon>business</mat-icon>
                             <h3 matLine class="fw-bold">{{loc.name}} </h3>
                             <p matLine>
@@ -55,16 +51,15 @@ import {MatSnackBar} from '@angular/material/snack-bar';
             </mat-drawer-content>
         </mat-drawer-container>
     `,
-    providers: [ApointmentsService]
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ApointmentsComponent implements OnInit {
+export class ApointmentsComponent implements OnInit, OnDestroy {
     @ViewChild('drawer', {static: true}) drawer!: MatDrawer;
     @ViewChild('locationsList', {static: true}) locationsList!: MatSelectionList;
 
-    locationSelected$ = new BehaviorSubject<Location | null>(null);
-    leafletOptions: LeafletOptions | null = null;
-
-    slots: DayWithSlots[] = [];
+    locations$ = new BehaviorSubject<Location[]>([])
+    selectedLocation$ = new BehaviorSubject<Location | null>(null);
+    appointment$: Observable<{ slots: DayWithSlots[], leafletOpt: LeafletOptions }> | null = null;
 
     sub = new Subscription();
 
@@ -74,37 +69,22 @@ export class ApointmentsComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.apointmentsService.getLoctions();
+        this.sub = this.apointmentsService.getLoctions().subscribe(locations => this.locations$.next(locations))
 
-        this.sub = this.apointmentsService.slots$.pipe(
-            skip(1)
-        ).subscribe(slots => {
-            this.slots = slots;
-            this.drawer.open();
-        });
-
-        this.locationSelected$.pipe(
-            skip(1),
-            map(loc => {
-                if (loc) {
-                    return {
-                        latLng: [loc.coords[0], loc.coords[1]],
-                        markerText: loc.address
-                    } as LeafletOptions
-                }
-                return null;
-            }),
-        ).subscribe(options => this.leafletOptions = options);
-    }
-
-    changeLocationHandler(loc: Location) {
-        this.locationSelected$.next(loc);
-        this.apointmentsService.getSlotsByLocationId(+loc._id);
-    }
-
-    resetApointmentHandler() {
-        this.locationsList.deselectAll();
-        this.drawer.close();
+        this.appointment$ = this.selectedLocation$.pipe(
+            filter(loc => !!loc),
+            switchMap(loc => {
+                return this.apointmentsService.getSlotsByLocationId(+loc!._id).pipe(
+                    map(slots => {
+                        const leafletOpt = {
+                            latLng: [loc!.coords[0], loc!.coords[1]],
+                            markerText: loc!.address
+                        } as LeafletOptions
+                        return {slots, leafletOpt};
+                    })
+                )
+            })
+        );
     }
 
     bookDayHandler(day: DayWithSlot) {
@@ -121,5 +101,14 @@ export class ApointmentsComponent implements OnInit {
             this.snackBar.open(msg, undefined, {duration: 2000});
             this.resetApointmentHandler();
         });
+    }
+
+    resetApointmentHandler() {
+        this.locationsList.deselectAll();
+        this.drawer.close();
+    }
+
+    ngOnDestroy(): void {
+        this.sub.unsubscribe();
     }
 }
