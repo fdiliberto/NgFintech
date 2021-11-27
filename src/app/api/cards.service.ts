@@ -20,14 +20,14 @@ export class CardsService {
         return this.http.post<Card>(`${env.apiUrl}/cards`, cardForm);
     }
 
-    deleteCard(cardId: number) {
-        return this.http.delete<boolean>(`${env.apiUrl}/${cardId}`);
+    deleteCard(cardId: string) {
+        return this.http.delete<boolean>(`${env.apiUrl}/cards/${cardId}`);
     }
 
-    getCardMovs(cardId: number, limit: number, offset: number) {
+    getCardMovs(cardId: string, limit: number = 0, offset: number = 0) {
         const params = new HttpParams()
             .set('limit', limit)
             .set('offset', offset);
-        return this.http.get<{ data: Movement[], total: number }>(`${env.apiUrl}/${cardId}/movements`, {params})
+        return this.http.get<{ data: Movement[], total: number }>(`${env.apiUrl}/cards/${cardId}/movements`, {params})
     }
 }

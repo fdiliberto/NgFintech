@@ -3,9 +3,10 @@ import {FormBuilder, Validators} from '@angular/forms';
 import {MatDialog} from '@angular/material/dialog';
 import {Contact} from '../../models/contact.model';
 import {ContactsComponent} from './contacts/contacts.component';
-import {filter, map} from 'rxjs/operators';
+import {map, switchMap} from 'rxjs/operators';
 import {EMPTY} from 'rxjs';
 import {MatSnackBar} from '@angular/material/snack-bar';
+import {ContactsService} from '../../api/contacts.service';
 
 @Component({
     selector: 'fd-transfer',
@@ -69,28 +70,6 @@ import {MatSnackBar} from '@angular/material/snack-bar';
     styles: []
 })
 export class TransferComponent implements OnInit {
-    // TODO
-    contacts: Contact[] = [
-        {
-            name: 'Fabio',
-            surname: 'Di Liberto',
-            iban: '123468798798789',
-            _id: '1'
-        },
-        {
-            name: 'Luana',
-            surname: 'Rossi',
-            iban: '1211111111111111',
-            _id: '2'
-        },
-        {
-            name: 'Gabriele',
-            surname: 'Gerardi',
-            iban: '88888888989',
-            _id: '3'
-        }
-    ]
-
     transferForm = this.fb.group({
         name: ['', Validators.required],
         surname: ['', Validators.required],
@@ -120,7 +99,10 @@ export class TransferComponent implements OnInit {
     }
 
 
-    constructor(private fb: FormBuilder, private dialog: MatDialog, private snackBar: MatSnackBar) {
+    constructor(private fb: FormBuilder,
+                private dialog: MatDialog,
+                private snackBar: MatSnackBar,
+                private contactService: ContactsService) {
 
     }
 
@@ -128,16 +110,19 @@ export class TransferComponent implements OnInit {
     }
 
     openContacts() {
-        let contactsDialogRef = this.dialog.open(ContactsComponent, {
-            width: '400px',
-            data: this.contacts
-        });
-
-        contactsDialogRef.afterClosed().pipe(
-            map(c => {
-                const contact = c as Contact;
-                return contact ? contact : EMPTY;
-            })
+        this.contactService.getContacts().pipe(
+            map(contacts => {
+                return this.dialog.open(ContactsComponent, {
+                    width: '400px',
+                    data: contacts
+                });
+            }),
+            switchMap(contactsDialogRef => contactsDialogRef.afterClosed().pipe(
+                map(c => {
+                    const contact = c as Contact;
+                    return contact ? contact : EMPTY;
+                })
+            ))
         ).subscribe(contact => this.transferForm.patchValue(contact));
     }
 

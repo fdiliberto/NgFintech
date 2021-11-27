@@ -1,10 +1,11 @@
-import {Component, ComponentRef, ElementRef, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {Card} from '../../models/card.model';
 import {CardCreate} from '../../models/card-create.model';
 import {CardFormComponent} from './card-form/card-form.component';
 import {CardsService} from '../../api/cards.service';
 import {BehaviorSubject} from 'rxjs';
 import {MatSnackBar} from '@angular/material/snack-bar';
+import {Router} from '@angular/router';
 
 @Component({
     selector: 'fd-cards',
@@ -29,7 +30,7 @@ import {MatSnackBar} from '@angular/material/snack-bar';
                     <fd-card-list
                             [cards]="cards$ | async"
                             (viewMovements)="viewMovementsHandler($event)"
-                            (delete)="deleteMovementsHandler($event)"
+                            (delete)="deleteCardHandler($event)"
                             (addCard)="drawer.open()">
                     </fd-card-list>
                 </mat-card>
@@ -44,19 +45,32 @@ export class CardsComponent implements OnInit {
     cards$ = new BehaviorSubject<Card[]>([]);
     selectedCardId$ = new BehaviorSubject<string>('');
 
-    constructor(private cardService: CardsService, private snackBar: MatSnackBar) {
+    constructor(private cardService: CardsService, private snackBar: MatSnackBar, private router: Router) {
     }
 
     ngOnInit(): void {
         this.cardService.getCards().subscribe(cards => this.cards$.next(cards));
     }
 
-    viewMovementsHandler(idCard: number) {
-        console.log('view mov', idCard);
+    viewMovementsHandler(idCard: string) {
+        this.router.navigate(['dashboard', 'movements', idCard]);
     }
 
-    deleteMovementsHandler(idCard: number) {
-        console.log('delete mov', idCard);
+    deleteCardHandler(idCard: string) {
+        console.log(idCard);
+        if (idCard) {
+            this.cardService.deleteCard(idCard).subscribe(success => {
+                const msg = success
+                    ? 'Carta rimossa con successo'
+                    : 'Si sono verificati errori durante l\'eliminazione della carta'
+
+                this.snackBar.open(msg, undefined, {duration: 2000});
+                if (success) {
+                    const cards = this.cards$.getValue().filter(c => c._id !== idCard.toString());
+                    this.cards$.next(cards);
+                }
+            })
+        }
     }
 
     addCard(cardToCreate: CardCreate) {

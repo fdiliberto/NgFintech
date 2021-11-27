@@ -15,13 +15,13 @@ import {Card} from '../../../models/card.model';
             </div>
             <div class="p-2">
                 <mat-icon class="pointer" matTooltip="Visualizza movimenti" [matTooltipPosition]="'left'"
-                          (click)="viewMovements.emit(+card._id)">
+                          (click)="viewMovements.emit(card._id)">
                     receipt_long
                 </mat-icon>
             </div>
             <div class="p-2">
                 <mat-icon class="pointer text-danger" matTooltip="Rimuovi" [matTooltipPosition]="'right'"
-                          (click)="delete.emit(+card._id)">
+                          (click)="delete.emit(card._id)">
                     delete
                 </mat-icon>
             </div>
@@ -40,7 +40,7 @@ import {Card} from '../../../models/card.model';
 })
 export class CardListComponent {
     @Input() cards: Card[] | null = []
-    @Output() viewMovements = new EventEmitter<number>();
-    @Output() delete = new EventEmitter<number>();
+    @Output() viewMovements = new EventEmitter<string>();
+    @Output() delete = new EventEmitter<string>();
     @Output() addCard = new EventEmitter<void>();
 }

@@ -10,14 +10,15 @@ import {FilterContactsPipe} from './pipes/filter-contacts.pipe';
 import {TimePipe} from './pipes/time.pipe';
 import {LeafletMapComponent} from './components/leaflet-map/leaflet-map.component';
 import {TimeStringPipe} from './pipes/time-string.pipe';
+import {NoDataFoundComponent} from './components/no-data-found.component';
 
-const COMPONENTS = [NavbarComponent, WelcomeComponent, IntroPageComponent, LeafletMapComponent];
+const COMPONENTS = [NavbarComponent, WelcomeComponent, IntroPageComponent, LeafletMapComponent, NoDataFoundComponent];
 const PIPES = [TruncatePipe, FilterContactsPipe, TimePipe, TimeStringPipe]
 
 @NgModule({
     declarations: [
         ...COMPONENTS,
-        ...PIPES,
+        ...PIPES
     ],
     imports: [
         CommonModule,

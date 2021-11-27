@@ -1,6 +1,11 @@
 import {Component, OnInit} from '@angular/core';
 import {Movement} from '../../models/movements.model';
 import {FormControl} from '@angular/forms';
+import {CardsService} from '../../api/cards.service';
+import {BehaviorSubject, combineLatest, merge, Observable, of} from 'rxjs';
+import {Card} from '../../models/card.model';
+import {ActivatedRoute,} from '@angular/router';
+import {distinctUntilChanged, filter, map, mergeMap, startWith, switchMap, take, tap} from 'rxjs/operators';
 
 @Component({
     selector: 'fd-movements',
@@ -12,64 +17,63 @@ import {FormControl} from '@angular/forms';
                 <mat-form-field appearance="fill" class="w-25 mb-0">
                     <mat-label>Seleziona carta per visualizzare i movimenti...</mat-label>
                     <mat-select [formControl]="cardControl">
-                        <mat-option *ngFor="let card of cards" [value]="card">
-                            {{card}}
+                        <mat-option *ngFor="let card of cards$ | async" [value]="card">
+                            {{card.number}}
                         </mat-option>
                     </mat-select>
                 </mat-form-field>
             </div>
         </fd-intro-page>
         <div class="col-md-8 offset-md-2 animate__animated animate__fadeIn">
-            <fd-movement *ngFor="let mov of movs"
-                         [type]="mov.type"
-                         [amount]="mov.amount"
-                         [title]="mov.title"
-                         [description]="mov.description"
-                         [dateAsTimeStamp]="mov.timestamp">
-            </fd-movement>
-            <button type="button" mat-raised-button color="primary" class="w-100">Carica altro (2/100)</button>
+            <ng-container *ngIf="movs$ | async as movs">
+                <ng-container *ngIf="movs.length; else noDataTpl">
+                    <fd-movement *ngFor="let mov of movs"
+                                 [type]="mov.type"
+                                 [amount]="mov.amount"
+                                 [title]="mov.title"
+                                 [description]="mov.description"
+                                 [dateAsTimeStamp]="mov.timestamp">
+                    </fd-movement>
+                    <button type="button" mat-raised-button color="primary" class="w-100" *ngIf="movs.length">Carica
+                        altro (2/100)
+                    </button>
+                </ng-container>
+                <ng-template #noDataTpl>
+                    <fd-no-data-found></fd-no-data-found>
+                </ng-template>
+            </ng-container>
         </div>
-
     `,
     styles: []
 })
 export class MovementsComponent implements OnInit {
-
-    // TODO
-    cards = [22222222222, 33333333];
-
-    movs: Movement[] = [
-        {
-            _id: '1',
-            title: 'Titolo mov 1',
-            type: 'in',
-            amount: 1000,
-            cardId: '1',
-            description: 'descrizione del movimento numero 1',
-            timestamp: 1637080811
-        },
-        {
-            _id: '2',
-            title: 'Titolo mov 2',
-            type: 'out',
-            amount: 500,
-            cardId: '2',
-            description: 'descrizione del movimento numero 2',
-            timestamp: 1628698810
-        }
-    ];
-
+    cards$ = new BehaviorSubject<Card[]>([]);
+    movs$ = new BehaviorSubject<Movement[]>([]);
 
     cardControl = new FormControl('');
 
-    constructor() {
+    constructor(private cardService: CardsService, private route: ActivatedRoute) {
+
     }
 
     ngOnInit(): void {
-        // TODO
-        this.cardControl.valueChanges.subscribe(cardNum => {
-            console.log(cardNum);
-        })
-    }
+        this.cardService.getCards().subscribe(cards => this.cards$.next(cards));
+        //this.cards2$ = this.cardService.getCards().pipe(shareReplay(1));
 
+        const cardIdFromParams$ = this.route.params.pipe(
+            map(params => params?.cardId || '')
+        ) as Observable<string>;
+
+        const cardIdFromSelect$ = this.cardControl.valueChanges.pipe(
+            startWith(''),
+            map(card => card._id)
+        ) as Observable<string>;
+
+        combineLatest([cardIdFromParams$, cardIdFromSelect$]).pipe(
+            map(([idFromParams, idFromSelect]) => {
+                return idFromSelect ? idFromSelect : idFromParams;
+            }),
+            switchMap(cardId => this.cardService.getCardMovs(cardId))
+        ).subscribe(movs => this.movs$.next(movs.data)); // TODO
+    }
 }

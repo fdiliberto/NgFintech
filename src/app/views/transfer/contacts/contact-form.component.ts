@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
 import {FormBuilder, Validators} from '@angular/forms';
 import {Contact} from '../../../models/contact.model';
 
@@ -39,7 +39,7 @@ import {Contact} from '../../../models/contact.model';
 })
 export class ContactFormComponent implements OnInit {
     @Input() contactToEdit: Contact | null = null;
-    @Output() saveContact = new EventEmitter<Omit<Contact, '_id'>>();
+    @Output() saveContact = new EventEmitter<Partial<Contact>>();
     @Output() back = new EventEmitter();
 
     contactForm = this.fb.group({

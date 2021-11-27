@@ -1,24 +1,28 @@
 import {Component, Inject, OnInit} from '@angular/core';
 import {Contact} from '../../../models/contact.model';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
+import {ContactsService} from '../../../api/contacts.service';
+import {MatSnackBar} from '@angular/material/snack-bar';
+import {delay, tap} from 'rxjs/operators';
+
 
 @Component({
     selector: 'fd-contacts',
     template: `
-        <ng-container *ngIf="!addOrUpdateContact">
+        <ng-container *ngIf="!showContactForm">
             <fd-contact-list
                     [contacts]="data"
-                    (addNewContact)="addOrUpdateContact = true"
+                    (addNewContact)="showContactForm = true"
                     (deleteContact)="deleteContactHandler($event)"
                     (editContact)="editContactHandler($event)"
                     (selectContact)="selectContactHandler($event)">
             </fd-contact-list>
         </ng-container>
-        <ng-container *ngIf="addOrUpdateContact">
+        <ng-container *ngIf="showContactForm">
             <fd-contact-form
                     [contactToEdit]="contactToEdit"
                     (back)="backHandler()"
-                    (saveContact)="saveContactHandler($event)">
+                    (saveContact)="upInsertContactHandler($event)">
             </fd-contact-form>
         </ng-container>
     `,
@@ -26,41 +30,58 @@ import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 })
 export class ContactsComponent implements OnInit {
     contactToEdit: Contact | null = null;
-    addOrUpdateContact = false;
+    showContactForm = false;
 
     constructor(private dialogRef: MatDialogRef<ContactsComponent>,
-                @Inject(MAT_DIALOG_DATA) public data: Contact[]) {
+                @Inject(MAT_DIALOG_DATA) public data: Contact[],
+                private contactsService: ContactsService,
+                private snackBar: MatSnackBar) {
     }
 
     ngOnInit(): void {
     }
 
     backHandler() {
-        this.addOrUpdateContact = false;
+        this.showContactForm = false;
         this.contactToEdit = null;
     }
 
     deleteContactHandler(contact: Contact) {
-        console.log('delete contact', contact);
+        const c = contact;
+        this.contactsService.deleteContact(contact._id).subscribe(success => {
+            if (success) {
+                this.data = this.data.filter(f => f._id !== c._id);
+                this.snackBar.open('Contatto rimosso con successo', undefined, {duration: 2000});
+            }
+        })
     }
 
     selectContactHandler(contact: Contact) {
-        console.log('select contact', contact);
         this.dialogRef.close(contact);
     }
 
     editContactHandler(contact: Contact) {
         this.contactToEdit = contact;
-        this.addOrUpdateContact = true;
-        console.log('edit contact', contact);
+        this.showContactForm = true;
     }
 
-    saveContactHandler(contact: Omit<Contact, "_id">) {
-        console.log('save contact', contact);
+    upInsertContactHandler(contact: Partial<Contact>) {
+        const upInsert$ = this.contactToEdit
+            ? this.contactsService.updateContact({...this.contactToEdit, ...contact})
+            : this.contactsService.createContact(contact);
 
-        // TODO chiamata a servizio per salvare contatto
-        setTimeout(() => {
-            this.dialogRef.close(contact);
-        }, 3000)
+        const msg = this.showContactForm
+            ? 'Contatto aggiornato con successo'
+            : 'Contatto creato con successo';
+
+        upInsert$.pipe(
+            delay(1000),
+            tap(contact => {
+                this.snackBar.open(msg, undefined, {duration: 2000});
+                return contact;
+            })
+        ).subscribe(contact => {
+            this.dialogRef.close(contact)
+        });
     }
 }
