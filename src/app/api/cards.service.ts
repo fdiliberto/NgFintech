@@ -24,7 +24,7 @@ export class CardsService {
         return this.http.delete<boolean>(`${env.apiUrl}/cards/${cardId}`);
     }
 
-    getCardMovs(cardId: string, limit: number = 0, offset: number = 0) {
+    getCardMovs(cardId: string, limit: number = 10, offset: number = 1) {
         const params = new HttpParams()
             .set('limit', limit)
             .set('offset', offset);

@@ -14,9 +14,7 @@ import {Router} from '@angular/router';
             <mat-drawer #drawer mode="over" position="end" class="position-fixed overflow-auto w-25"
                         [disableClose]="true">
                 <div class="m-3">
-                    <!-- workaround con if per evitare che il form rimanga validato e mostri gli errori -->
                     <fd-card-form
-                            *ngIf="drawer.opened"
                             (cancel)="drawer.toggle()"
                             (createCard)="drawer.close(); addCard($event);">
                     </fd-card-form>

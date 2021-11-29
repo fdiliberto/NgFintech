@@ -4,9 +4,14 @@ import {MatDialog} from '@angular/material/dialog';
 import {Contact} from '../../models/contact.model';
 import {ContactsComponent} from './contacts/contacts.component';
 import {map, switchMap} from 'rxjs/operators';
-import {EMPTY} from 'rxjs';
+import {BehaviorSubject, EMPTY} from 'rxjs';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {ContactsService} from '../../api/contacts.service';
+import {TransferService} from '../../api/transfer.service';
+import {Transfer} from '../../models/transfer.model';
+import {CardsService} from '../../api/cards.service';
+import {Card} from '../../models/card.model';
+import {formReset} from '../../shared/utils/material-forms.utils.ts';
 
 @Component({
     selector: 'fd-transfer',
@@ -49,11 +54,8 @@ import {ContactsService} from '../../api/contacts.service';
                     <mat-form-field appearance="fill" class="d-block mb-2">
                         <mat-label>Seleziona carta</mat-label>
                         <mat-select formControlName="cardId">
-                            <mat-option [value]="1">
-                                22222222222222222
-                            </mat-option>
-                            <mat-option [value]="2">
-                                333333333333333
+                            <mat-option [value]="card._id" *ngFor="let card of cards$ | async">
+                                {{card.number}}
                             </mat-option>
                         </mat-select>
                         <mat-error *ngIf="cardId!.hasError('required')">
@@ -70,6 +72,9 @@ import {ContactsService} from '../../api/contacts.service';
     styles: []
 })
 export class TransferComponent implements OnInit {
+
+    cards$ = new BehaviorSubject<Card[]>([]);
+
     transferForm = this.fb.group({
         name: ['', Validators.required],
         surname: ['', Validators.required],
@@ -102,11 +107,14 @@ export class TransferComponent implements OnInit {
     constructor(private fb: FormBuilder,
                 private dialog: MatDialog,
                 private snackBar: MatSnackBar,
-                private contactService: ContactsService) {
+                private contactService: ContactsService,
+                private transferService: TransferService,
+                private cardService: CardsService) {
 
     }
 
     ngOnInit(): void {
+        this.cardService.getCards().subscribe(cards => this.cards$.next(cards));
     }
 
     openContacts() {
@@ -128,11 +136,12 @@ export class TransferComponent implements OnInit {
 
     submit() {
         if (this.transferForm.valid) {
-            console.log(this.transferForm)
-
-            // TODO chiamata server
-            setTimeout(() => {
-                this.snackBar.open('Trasferimento completato', '', {duration: 2000});
+            this.transferService.createTransfer(this.transferForm.value as Transfer).subscribe(success => {
+                const msg = success
+                    ? 'Trasferimento completato'
+                    : 'Si sono verificati errori durante il trasferimento';
+                this.snackBar.open(msg, undefined, {duration: 2000});
+                formReset(this.transferForm);
             });
         }
     }

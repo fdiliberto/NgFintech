@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {Movement} from '../../models/movements.model';
 import {FormControl} from '@angular/forms';
 import {CardsService} from '../../api/cards.service';
-import {BehaviorSubject, combineLatest, merge, Observable, of} from 'rxjs';
+import {BehaviorSubject, combineLatest, EMPTY, merge, Observable, of} from 'rxjs';
 import {Card} from '../../models/card.model';
 import {ActivatedRoute,} from '@angular/router';
 import {distinctUntilChanged, filter, map, mergeMap, startWith, switchMap, take, tap} from 'rxjs/operators';
@@ -53,7 +53,6 @@ export class MovementsComponent implements OnInit {
     cardControl = new FormControl('');
 
     constructor(private cardService: CardsService, private route: ActivatedRoute) {
-
     }
 
     ngOnInit(): void {
@@ -61,18 +60,19 @@ export class MovementsComponent implements OnInit {
         //this.cards2$ = this.cardService.getCards().pipe(shareReplay(1));
 
         const cardIdFromParams$ = this.route.params.pipe(
-            map(params => params?.cardId || '')
+            filter(params => !!params),
+            map(params => params.cardId)
         ) as Observable<string>;
 
         const cardIdFromSelect$ = this.cardControl.valueChanges.pipe(
-            startWith(''),
-            map(card => card._id)
+            startWith(null),
+            filter(card => !!card),
+            map(card => (card as Card)._id)
         ) as Observable<string>;
 
         combineLatest([cardIdFromParams$, cardIdFromSelect$]).pipe(
-            map(([idFromParams, idFromSelect]) => {
-                return idFromSelect ? idFromSelect : idFromParams;
-            }),
+            map(([cardIdFromParams, cardIdFromSelect]) => cardIdFromSelect ? cardIdFromSelect : cardIdFromParams),
+            tap((id) => console.log(id)),
             switchMap(cardId => this.cardService.getCardMovs(cardId))
         ).subscribe(movs => this.movs$.next(movs.data)); // TODO
     }
