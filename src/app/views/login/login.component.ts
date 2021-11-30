@@ -1,5 +1,13 @@
 import {Component, OnInit} from '@angular/core';
 import {FormBuilder, Validators} from '@angular/forms';
+import {AuthCookiesService} from '../../core/auth/services/auth-cookies.service';
+import {catchError} from 'rxjs/operators';
+import {HttpErrorResponse} from '@angular/common/http';
+import {EMPTY, of, throwError} from 'rxjs';
+import {MatSnackBar} from '@angular/material/snack-bar';
+import {unwrapConstructorDependencies} from '@angular/compiler-cli/src/ngtsc/annotations/src/util';
+import {Router} from '@angular/router';
+import {User} from '../../core/auth/models/user.model';
 
 @Component({
     selector: 'fd-login',
@@ -67,7 +75,10 @@ export class LoginComponent implements OnInit {
         return this.loginForm.get('password');
     }
 
-    constructor(private fb: FormBuilder) {
+    constructor(private fb: FormBuilder,
+                private authService: AuthCookiesService,
+                private snackBar: MatSnackBar,
+                private router: Router) {
     }
 
     ngOnInit(): void {
@@ -75,7 +86,17 @@ export class LoginComponent implements OnInit {
 
     login() {
         if (this.loginForm.valid) {
-            console.log(this.loginForm.value);
+            const {email, password} = this.loginForm.value;
+            this.authService.login(email, password).pipe(
+                catchError(error => {
+                    if (error instanceof HttpErrorResponse && error.status === 401) {
+                        this.snackBar.open('Utente non autorizzato', undefined, {duration: 2000});
+                    }
+                    return throwError(error);
+                })).subscribe((user) => {
+                this.snackBar.open(`Benvenuto/a ${(user as User).displayName}`, undefined, {duration: 2000});
+                this.router.navigate(['/dashboard']);
+            });
         }
     }
 }

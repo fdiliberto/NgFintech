@@ -1,6 +1,11 @@
 import {Component, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {passwordConfirmValidator} from './validators/passwordConfirm.validator';
+import {AuthCookiesService} from '../../core/auth/services/auth-cookies.service';
+import {catchError, map} from 'rxjs/operators';
+import {MatSnackBar} from '@angular/material/snack-bar';
+import {of} from 'rxjs';
+import {HttpErrorResponse} from '@angular/common/http';
 
 @Component({
     selector: 'fd-register',
@@ -134,12 +139,25 @@ export class RegisterComponent implements OnInit {
     ngOnInit(): void {
     }
 
-    constructor(private fb: FormBuilder) {
+    constructor(private fb: FormBuilder, private authService: AuthCookiesService, private snackBar: MatSnackBar) {
     }
 
     register() {
         if (this.registerForm.valid) {
-            console.log(this.registerForm.value);
+            const {email, passwords: {password}, name, surname} = this.registerForm.value;
+            this.authService.register({
+                email,
+                password,
+                name,
+                surname
+            }).pipe(
+                catchError(errorResponse => of((errorResponse as HttpErrorResponse).error))
+            ).subscribe(response => {
+                console.log(response);
+                const {message, error} = response;
+                const msg = error ?? message;
+                this.snackBar.open(msg, undefined, {duration: 2000});
+            });
         }
     }
 }

@@ -1,4 +1,6 @@
 import {Component, OnInit} from '@angular/core';
+import {UserStore} from '../../core/auth/services/user.store';
+import {AuthCookiesService} from '../../core/auth/services/auth-cookies.service';
 
 @Component({
     selector: 'fd-navbar',
@@ -41,16 +43,19 @@ import {Component, OnInit} from '@angular/core';
                 <mat-icon class="me-3">summarize</mat-icon>
                 Tasse
             </a>
-            <a mat-list-item [routerLink]="[]">
-                <mat-icon class="me-3">person</mat-icon>
-                UTENTE TODO</a>
+            <a mat-list-item (click)="authService.logout()">
+                <ng-container *ngIf="userStore.user$ | async as u">
+                    <mat-icon class="me-3">person</mat-icon>
+                    {{u.displayName}}
+                </ng-container>
+            </a>
         </mat-nav-list>
     `,
     styles: []
 })
 export class NavbarComponent implements OnInit {
 
-    constructor() {
+    constructor(public userStore: UserStore, public authService: AuthCookiesService) {
     }
 
     ngOnInit(): void {

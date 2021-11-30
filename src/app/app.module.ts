@@ -10,6 +10,7 @@ import {HttpClientModule, HttpClientXsrfModule} from '@angular/common/http';
  */
 import {registerLocaleData} from '@angular/common';
 import localeIt from '@angular/common/locales/it';
+import {AuthCookiesModule} from './core/auth/auth-cookies.module';
 
 registerLocaleData(localeIt, 'it');
 
@@ -23,11 +24,7 @@ registerLocaleData(localeIt, 'it');
         BrowserAnimationsModule,
         CoreModule,
         HttpClientModule,
-        // Valori di default per autenticazione con COOKIES:
-        HttpClientXsrfModule.withOptions({
-            cookieName: 'XSRF-TOKEN',
-            headerName: 'X-XSRF-TOKEN',
-        })
+        AuthCookiesModule
     ],
     providers: [
         {
