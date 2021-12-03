@@ -1,10 +1,10 @@
-import {Component, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {passwordConfirmValidator} from './validators/passwordConfirm.validator';
 import {AuthCookiesService} from '../../core/auth/services/auth-cookies.service';
-import {catchError, map} from 'rxjs/operators';
+import {catchError, exhaustMap, map} from 'rxjs/operators';
 import {MatSnackBar} from '@angular/material/snack-bar';
-import {of} from 'rxjs';
+import {EMPTY, of, Subject, Subscription} from 'rxjs';
 import {HttpErrorResponse} from '@angular/common/http';
 
 @Component({
@@ -14,7 +14,7 @@ import {HttpErrorResponse} from '@angular/common/http';
             <div class="col-md-4">
                 <mat-card class="p-5 shadow animate__animated animate__flipInY">
                     <h1 class="text-center pb-4"><span class="fst-italic">Registrazione</span></h1>
-                    <form [formGroup]="registerForm" (ngSubmit)="register()">
+                    <form [formGroup]="registerForm" (ngSubmit)="register$.next()">
                         <mat-form-field appearance="fill" class="w-100 mb-3">
                             <mat-label>Email</mat-label>
                             <input formControlName="email" matInput>
@@ -89,7 +89,8 @@ import {HttpErrorResponse} from '@angular/common/http';
             position: relative;
             top: 0.16em;
         }
-    `]
+    `],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RegisterComponent implements OnInit {
     /**
@@ -97,6 +98,9 @@ export class RegisterComponent implements OnInit {
      */
     hide = true;
     hideRepeatPsw = true;
+
+    register$ = new Subject();
+    registerSub = new Subscription();
 
     registerForm = this.fb.group({
         email: ['', [Validators.required, Validators.email]],
@@ -136,28 +140,37 @@ export class RegisterComponent implements OnInit {
         return this.registerForm.get('passwords.repeatPassword');
     }
 
-    ngOnInit(): void {
-    }
-
     constructor(private fb: FormBuilder, private authService: AuthCookiesService, private snackBar: MatSnackBar) {
     }
 
-    register() {
-        if (this.registerForm.valid) {
-            const {email, passwords: {password}, name, surname} = this.registerForm.value;
-            this.authService.register({
-                email,
-                password,
-                name,
-                surname
-            }).pipe(
-                catchError(errorResponse => of((errorResponse as HttpErrorResponse).error))
-            ).subscribe(response => {
-                console.log(response);
-                const {message, error} = response;
-                const msg = error ?? message;
-                this.snackBar.open(msg, undefined, {duration: 2000});
-            });
-        }
+    ngOnInit(): void {
+        this.registerSub = this.register$.pipe(
+            map(() => {
+                if (this.registerForm.valid) {
+                    const {email, passwords: {password}, name, surname} = this.registerForm.value;
+                    return {email, password, name, surname};
+                }
+                return EMPTY;
+            }),
+            exhaustMap((registrationData) => {
+                const {
+                    email,
+                    password,
+                    name,
+                    surname
+                } = registrationData as { email: string, password: string, name: string, surname: string }
+                return this.authService.register({
+                    email,
+                    password,
+                    name,
+                    surname
+                }).pipe(catchError(errorResponse => of((errorResponse as HttpErrorResponse).error)))
+            })
+        ).subscribe(response => {
+            console.log(response);
+            const {message, error} = response;
+            const msg = error ?? message;
+            this.snackBar.open(msg, undefined, {duration: 2000});
+        });
     }
 }

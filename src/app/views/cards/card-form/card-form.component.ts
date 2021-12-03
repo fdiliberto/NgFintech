@@ -63,7 +63,6 @@ import {formReset} from '../../../shared/utils/material-forms.utils.ts';
             </button>
         </form>
     `,
-    styles: [],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CardFormComponent {
@@ -77,7 +76,6 @@ export class CardFormComponent {
         number: ['', [Validators.required, requiredLengthValidator(16)]],
         csc: ['', [Validators.required, requiredLengthValidator(3)]],
     });
-
 
     get typeControl() {
         return this.cardForm.get('type');

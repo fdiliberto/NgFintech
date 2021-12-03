@@ -1,11 +1,10 @@
-import {Component, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from '@angular/core';
 import {FormBuilder, Validators} from '@angular/forms';
 import {AuthCookiesService} from '../../core/auth/services/auth-cookies.service';
-import {catchError} from 'rxjs/operators';
+import {catchError, exhaustMap, map} from 'rxjs/operators';
 import {HttpErrorResponse} from '@angular/common/http';
-import {EMPTY, of, throwError} from 'rxjs';
+import {EMPTY, of, Subject, Subscription} from 'rxjs';
 import {MatSnackBar} from '@angular/material/snack-bar';
-import {unwrapConstructorDependencies} from '@angular/compiler-cli/src/ngtsc/annotations/src/util';
 import {Router} from '@angular/router';
 import {User} from '../../core/auth/models/user.model';
 
@@ -16,7 +15,7 @@ import {User} from '../../core/auth/models/user.model';
             <div class="col-md-4">
                 <mat-card class="p-5 shadow animate__animated animate__flipInX">
                     <h1 class="text-center pb-4"><span class="fst-italic">NgFintech Login</span></h1>
-                    <form [formGroup]="loginForm" (ngSubmit)="login()">
+                    <form [formGroup]="loginForm" (ngSubmit)="login$.next()">
                         <mat-form-field appearance="fill" class="w-100 mb-3">
                             <mat-label>
                                 <mat-icon>person</mat-icon>
@@ -51,13 +50,16 @@ import {User} from '../../core/auth/models/user.model';
             </div>
         </div>
     `,
-    styles: []
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
     /**
      * show or hide password input on form
      */
     hide = true;
+
+    login$ = new Subject();
+    loginSub = new Subscription();
 
     loginForm = this.fb.group({
         email: ['', [Validators.required, Validators.email]],
@@ -82,21 +84,39 @@ export class LoginComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.loginSub = this.login$.pipe(
+            map(() => {
+                if (this.loginForm.valid) {
+                    const {email, password} = this.loginForm.value as { email: string, password: string };
+                    return {email, password};
+                }
+                return EMPTY;
+            }),
+            exhaustMap((credentials) => {
+                const cred = credentials as { email: string, password: string };
+                return this.authService.login(cred.email, cred.password).pipe(
+                    catchError(error => {
+                        if (error instanceof HttpErrorResponse && error.status === 401) {
+                            return of({error: 'Utente non autorizzato'})
+                        }
+                        return of({
+                            error: 'Si sono verificati errori. Contatta il supporto'
+                        });
+                    })
+                )
+            }),
+        ).subscribe((result: User | { error: string }) => {
+            const errorMsg = result as { error: string };
+            if (errorMsg.error !== undefined) {
+                this.snackBar.open((result as { error: string }).error, undefined, {duration: 2000});
+            } else {
+                this.snackBar.open(`Benvenuto/a ${(result as User).displayName}`, undefined, {duration: 2000});
+                this.router.navigate(['/dashboard']);
+            }
+        });
     }
 
-    login() {
-        if (this.loginForm.valid) {
-            const {email, password} = this.loginForm.value;
-            this.authService.login(email, password).pipe(
-                catchError(error => {
-                    if (error instanceof HttpErrorResponse && error.status === 401) {
-                        this.snackBar.open('Utente non autorizzato', undefined, {duration: 2000});
-                    }
-                    return throwError(error);
-                })).subscribe((user) => {
-                this.snackBar.open(`Benvenuto/a ${(user as User).displayName}`, undefined, {duration: 2000});
-                this.router.navigate(['/dashboard']);
-            });
-        }
+    ngOnDestroy(): void {
+        this.loginSub.unsubscribe();
     }
 }

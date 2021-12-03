@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "concurrently \"npm --prefix C:\\GITHUB\\AcademyNgFintech\\fintech-backend start\" \"ng serve --open\"",
+    "start": "concurrently \"npm --prefix C:\\GITHUB\\AcademyNgFintech\\fintech-backend run dev:auth\" \"ng serve --open\"",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"

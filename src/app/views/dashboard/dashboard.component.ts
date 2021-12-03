@@ -1,5 +1,4 @@
-import {Component, OnInit} from '@angular/core';
-import {LeafletOptions} from '../../shared/components/leaflet-map/leaflet-options.model';
+import {ChangeDetectionStrategy, Component} from '@angular/core';
 
 @Component({
     selector: 'fd-dashboard',
@@ -21,9 +20,7 @@ import {LeafletOptions} from '../../shared/components/leaflet-map/leaflet-option
             </mat-sidenav-content>
         </mat-sidenav-container>
     `,
-    styles: []
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent {
-    constructor() {
-    }
 }

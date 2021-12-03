@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {Observable, of} from 'rxjs';
-import {switchMap, switchMapTo, take, tap} from 'rxjs/operators';
+import {delay, exhaustMap, switchMap, switchMapTo, take, tap} from 'rxjs/operators';
 import {Router} from '@angular/router';
 import {environment as env} from '../../../../environments/environment';
 import {UserStore} from './user.store';
