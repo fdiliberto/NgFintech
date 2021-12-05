@@ -1,11 +1,11 @@
-import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, Input, OnInit} from '@angular/core';
 import {Movement} from '../../models/movements.model';
 import {FormControl} from '@angular/forms';
 import {CardsService} from '../../api/cards.service';
-import {BehaviorSubject, EMPTY, iif} from 'rxjs';
+import {BehaviorSubject} from 'rxjs';
 import {Card} from '../../models/card.model';
 import {ActivatedRoute,} from '@angular/router';
-import {distinctUntilChanged, map, startWith, switchMap} from 'rxjs/operators';
+import {map} from 'rxjs/operators';
 
 export type pagination = { limit: number, offset: number };
 
@@ -15,7 +15,7 @@ export type pagination = { limit: number, offset: number };
         <fd-intro-page
                 description="In questa pagina potrai visualizzare la lista dei movimenti per ogni carta selezionata.">
             <div class="d-flex justify-content-around align-items-center mt-4">
-                <h2 class="text-center text-warning fw-bold">Saldo: {{2000 | currency}} </h2>
+                <h2 class="text-center text-warning fw-bold">Saldo: {{balance | currency}} </h2>
                 <mat-form-field appearance="fill" class="w-25 mb-0">
                     <mat-label>Seleziona carta per visualizzare i movimenti...</mat-label>
                     <mat-select [formControl]="cardControl">
@@ -28,7 +28,7 @@ export type pagination = { limit: number, offset: number };
         </fd-intro-page>
         <div class="col-auto m-2 animate__animated animate__fadeIn">
             <ng-container *ngIf="movs$ | async as movs">
-                <ng-container *ngIf="movs.data?.length; else noDataTpl">
+                <ng-container *ngIf="movs.data.length">
                     <fd-movement *ngFor="let mov of movs.data"
                                  [type]="mov.type"
                                  [amount]="mov.amount"
@@ -36,14 +36,12 @@ export type pagination = { limit: number, offset: number };
                                  [description]="mov.description"
                                  [dateAsTimeStamp]="mov.timestamp">
                     </fd-movement>
-                    <button type="button" mat-raised-button color="primary" class="w-100" *ngIf="movs.data.length"
-                            (click)="loadMore()">
-                        Carica altri dati (2/{{movs.total}})
-                    </button>
                 </ng-container>
-                <ng-template #noDataTpl>
-                    <fd-no-data-found></fd-no-data-found>
-                </ng-template>
+                <fd-button-pagination [resetPagination]="resetPagination"
+                                      [disabled]="disablePagination"
+                                      (loadMore)="loadMore($event)">
+                </fd-button-pagination>
+                <fd-no-data-found *ngIf="!movs.data.length"></fd-no-data-found>
             </ng-container>
         </div>
     `,
@@ -51,11 +49,13 @@ export type pagination = { limit: number, offset: number };
 })
 export class MovementsComponent implements OnInit {
     cards$ = new BehaviorSubject<Card[]>([]);
-    movs$ = new BehaviorSubject<{ data: Movement[], total: number } | null>(null);
+    movs$ = new BehaviorSubject<{ data: Movement[], total: number }>({data: [], total: 0});
+
+    disablePagination = false;
+    resetPagination = false;
+    balance = 0;
 
     cardControl = new FormControl('');
-
-    loadMore$ = new BehaviorSubject<pagination>({limit: 5, offset: 0});
 
     constructor(private cardService: CardsService, private route: ActivatedRoute) {
     }
@@ -67,18 +67,30 @@ export class MovementsComponent implements OnInit {
             map(params => params.cardId || '')
         ).subscribe(cardId => this.cardControl.setValue(cardId));
 
-        this.cardControl.valueChanges.pipe(
-            startWith(this.route.snapshot.params.cardId || ''),
-            switchMap(cardId => iif(() => cardId !== '', this.cardService.getCardMovs(cardId), EMPTY))
-        ).subscribe(movs => this.movs$.next(movs)); // TODO
+        this.cardControl.valueChanges.subscribe(() => this.reset());
     }
 
-    loadMore() {
-        const currentPage= this.loadMore$.getValue();
+    loadMore(pag: pagination) {
+        if (this.cardControl.value) {
+            this.cardService.getCardMovs(this.cardControl.value, pag.limit, pag.offset).subscribe(movs => {
+                const currentData = this.movs$.getValue();
+                const finalData = [...currentData.data, ...movs.data];
+                this.movs$.next({data: finalData, total: movs.total});
+                this.disablePagination = finalData.length === movs.total;
+                this.resetPagination = this.disablePagination;
+                this.getBalance(finalData);
+            });
+        }
+    }
 
+    getBalance(movs: Movement[]) {
+        this.balance = movs.reduce((acc, current) => acc + (current.amount * (current.type === 'out' ? -1 : 1)), 0);
+    }
 
-        const nextPage: pagination = {limit: currentPage.limit + 5, offset: currentPage.limit};
-        this.loadMore$.next(nextPage);
-        console.log(this.loadMore$.getValue());
+    reset() {
+        this.movs$.next({data: [], total: 0});
+        this.disablePagination = false;
+        this.resetPagination = true;
+        this.balance = 0;
     }
 }

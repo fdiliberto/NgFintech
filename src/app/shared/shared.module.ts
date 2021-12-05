@@ -11,8 +11,9 @@ import {TimePipe} from './pipes/time.pipe';
 import {LeafletMapComponent} from './components/leaflet-map/leaflet-map.component';
 import {TimeStringPipe} from './pipes/time-string.pipe';
 import {NoDataFoundComponent} from './components/no-data-found.component';
+import {ButtonPaginationComponent} from './components/button-pagination.component';
 
-const COMPONENTS = [NavbarComponent, WelcomeComponent, IntroPageComponent, LeafletMapComponent, NoDataFoundComponent];
+const COMPONENTS = [NavbarComponent, WelcomeComponent, IntroPageComponent, LeafletMapComponent, NoDataFoundComponent, ButtonPaginationComponent];
 const PIPES = [TruncatePipe, FilterContactsPipe, TimePipe, TimeStringPipe]
 
 @NgModule({
