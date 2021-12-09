@@ -17,7 +17,7 @@ import {formReset} from '../../shared/utils/material-forms.utils.ts';
     selector: 'fd-transfer',
     template: `
         <fd-intro-page description="In questa pagina potrai effettuare un trasferimento di denaro."></fd-intro-page>
-        <mat-card class="col-md-8 offset-md-2 animate__animated animate__fadeIn">
+        <mat-card class="col-auto m-2 animate__animated animate__fadeIn">
             <div class="d-flex justify-content-center">
                 <form [formGroup]="transferForm" (ngSubmit)="submit()" class="col-md-5 mt-3">
                     <button type="button" mat-raised-button class="w-100 mb-3" (click)="openContacts()">

@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, Input, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
 import {Movement} from '../../models/movements.model';
 import {FormControl} from '@angular/forms';
 import {CardsService} from '../../api/cards.service';
@@ -39,6 +39,8 @@ export type pagination = { limit: number, offset: number };
                 </ng-container>
                 <fd-button-pagination [resetPagination]="resetPagination"
                                       [disabled]="disablePagination"
+                                      [currentItems]="movs.data.length"
+                                      [totalItems]="movs.total"
                                       (loadMore)="loadMore($event)">
                 </fd-button-pagination>
                 <fd-no-data-found *ngIf="!movs.data.length"></fd-no-data-found>

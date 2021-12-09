@@ -16,7 +16,7 @@ import {filter, map} from 'rxjs/operators';
         </div>
         <form [formGroup]="apointmentForm" (ngSubmit)="submit()">
             <mat-form-field appearance="fill" class="d-block mb-2">
-                <mat-label>Choose a date</mat-label>
+                <mat-label>Data</mat-label>
                 <input matInput [matDatepicker]="picker" formControlName="date" [min]="today"
                        [matDatepickerFilter]="filterAvailability" (dateChange)="changeDateHandler($event)">
                 <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>

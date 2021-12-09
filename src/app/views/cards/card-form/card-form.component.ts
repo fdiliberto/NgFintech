@@ -1,8 +1,8 @@
 import {ChangeDetectionStrategy, Component, EventEmitter, Output} from '@angular/core';
 import {FormBuilder, Validators} from '@angular/forms';
 import {CardCreate} from '../../../models/card-create.model';
-import {requiredLengthValidator} from '../validators/requiredLength.validator';
 import {formReset} from '../../../shared/utils/material-forms.utils.ts';
+import {requiredLengthValidator} from '../../../shared/validators/requiredLength.validator';
 
 @Component({
     selector: 'fd-card-form',

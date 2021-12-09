@@ -12,6 +12,7 @@ import {LeafletMapComponent} from './components/leaflet-map/leaflet-map.componen
 import {TimeStringPipe} from './pipes/time-string.pipe';
 import {NoDataFoundComponent} from './components/no-data-found.component';
 import {ButtonPaginationComponent} from './components/button-pagination.component';
+import {ValidatorsModule} from './validators/validators.module';
 
 const COMPONENTS = [NavbarComponent, WelcomeComponent, IntroPageComponent, LeafletMapComponent, NoDataFoundComponent, ButtonPaginationComponent];
 const PIPES = [TruncatePipe, FilterContactsPipe, TimePipe, TimeStringPipe]
@@ -24,9 +25,10 @@ const PIPES = [TruncatePipe, FilterContactsPipe, TimePipe, TimeStringPipe]
     imports: [
         CommonModule,
         MaterialModule,
-        RouterModule
+        RouterModule,
+        ValidatorsModule
     ],
-    exports: [...COMPONENTS, ...PIPES]
+    exports: [...COMPONENTS, ...PIPES, ValidatorsModule]
 })
 export class SharedModule {
 }

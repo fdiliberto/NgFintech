@@ -34,7 +34,7 @@ import {ApointmentsService} from '../../api/apointments.service';
                 <fd-intro-page
                         description="In questa pagina potrai fissare un appuntamento con la tua banca.">
                 </fd-intro-page>
-                <mat-card class="col-md-8 offset-md-2 animate__animated animate__fadeIn">
+                <mat-card class="col-auto m-2 animate__animated animate__fadeIn">
                     <mat-selection-list #locationsList [multiple]="false">
                         <mat-list-option *ngFor="let loc of locations$ | async" [value]="loc._id"
                                          (click)="drawer.open(); selectedLocation$.next(loc)">

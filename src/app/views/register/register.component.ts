@@ -1,11 +1,11 @@
 import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {passwordConfirmValidator} from './validators/passwordConfirm.validator';
 import {AuthCookiesService} from '../../core/auth/services/auth-cookies.service';
 import {catchError, exhaustMap, map} from 'rxjs/operators';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {EMPTY, of, Subject, Subscription} from 'rxjs';
 import {HttpErrorResponse} from '@angular/common/http';
+import {equalFieldsValidator} from '../../shared/validators/passwordConfirm.validator';
 
 @Component({
     selector: 'fd-register',
@@ -106,11 +106,15 @@ export class RegisterComponent implements OnInit {
         email: ['', [Validators.required, Validators.email]],
         name: ['', Validators.required],
         surname: ['', Validators.required],
-        passwords: this.fb.group({
+        passwords: this.fb.group(
+            {
                 password: ['', Validators.required],
                 repeatPassword: ['', [Validators.required]]
             },
-            {validators: passwordConfirmValidator()})
+            {
+                validators: equalFieldsValidator('password', 'repeatPassword')
+            }
+        )
     })
 
     /**

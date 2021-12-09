@@ -12,7 +12,7 @@ export type pagination = { limit: number, offset: number };
         <button type="button" mat-raised-button color="primary" class="w-100" [disabled]="disabled"
                 (click)="loadMoreHandler()">
             <ng-container *ngIf="pagination | async as pag">
-                Carica dati...
+                Carica dati <small *ngIf="totalItems > 0">({{currentItems}}/{{totalItems}})</small>
             </ng-container>
         </button>
     `,
@@ -23,6 +23,8 @@ export class ButtonPaginationComponent implements OnChanges {
     @Input() limit = 5;
     @Input() resetPagination: boolean | null = null;
     @Input() disabled = false;
+    @Input() currentItems = 0;
+    @Input() totalItems = 0;
     @Output() loadMore = new EventEmitter<pagination>();
 
     pagination = new BehaviorSubject<pagination>({limit: 0, offset: 0})
