@@ -9,21 +9,21 @@ import {requiredLengthValidator} from '../../shared/validators/requiredLength.va
         <mat-card class="col-auto m-2 animate__animated animate__fadeIn">
             <div class="row">
                 <form [formGroup]="taxesForm" (ngSubmit)="submit()">
-                    <mat-form-field appearance="fill" class="col-md-5 mb-2">
+                    <mat-form-field appearance="fill" class="col-md-5 me-2 mb-2">
                         <mat-label>Nome</mat-label>
                         <input formControlName="nome" matInput>
                         <mat-error *ngIf="nomeControl!.hasError('required')">
                             Nome <strong>richiesto</strong>
                         </mat-error>
                     </mat-form-field>
-                    <mat-form-field appearance="fill" class="col-md-5 ms-2 mb-2">
+                    <mat-form-field appearance="fill" class="col-md-5 mb-2">
                         <mat-label>Cognome</mat-label>
                         <input formControlName="cognome" matInput>
                         <mat-error *ngIf="cognomeControl!.hasError('required')">
                             Cognome <strong>richiesto</strong>
                         </mat-error>
                     </mat-form-field>
-                    <mat-form-field appearance="fill" class="col-md-5 mb-2">
+                    <mat-form-field appearance="fill" class="col-md-5 me-2 mb-2">
                         <mat-label>Sesso</mat-label>
                         <mat-select formControlName="sesso">
                             <mat-option [value]="'M'">
@@ -37,7 +37,7 @@ import {requiredLengthValidator} from '../../shared/validators/requiredLength.va
                             Sesso <strong>richiesto</strong>
                         </mat-error>
                     </mat-form-field>
-                    <mat-form-field appearance="fill" class="col-md-5 ms-2 mb-2">
+                    <mat-form-field appearance="fill" class="col-md-5 mb-2">
                         <mat-label>Data di nascita</mat-label>
                         <input matInput [matDatepicker]="picker" formControlName="dataNascita" [max]="today">
                         <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
@@ -46,14 +46,14 @@ import {requiredLengthValidator} from '../../shared/validators/requiredLength.va
                             Data di nascita <strong>richiesta</strong>
                         </mat-error>
                     </mat-form-field>
-                    <mat-form-field appearance="fill" class="col-md-5 mb-2">
+                    <mat-form-field appearance="fill" class="col-md-5 me-2 mb-2">
                         <mat-label>Città di nascita</mat-label>
                         <input formControlName="cittaNascita" matInput>
                         <mat-error *ngIf="cittaNascitaControl!.hasError('required')">
                             Città di nascita <strong>richiesta</strong>
                         </mat-error>
                     </mat-form-field>
-                    <mat-form-field appearance="fill" class="col-md-5 ms-2 mb-2">
+                    <mat-form-field appearance="fill" class="col-md-5 me-2 mb-2">
                         <mat-label>Provincia di nascita</mat-label>
                         <input formControlName="provinciaNascita" matInput>
                         <mat-error *ngIf="provinciaNascitaControl!.hasError('required')">
@@ -72,7 +72,7 @@ import {requiredLengthValidator} from '../../shared/validators/requiredLength.va
                         </mat-error>
                     </mat-form-field>
                     <!-- ERARIO -->
-                    <div class="mat-form-field col-md-12 mb-2">
+                    <div class="mat-form-field col-md-12 mb-4">
                         <h2 class="fw-bold">Erario</h2>
                         <button type="button" mat-fab color="warn" aria-label="Aggiungi erario" (click)="addErario()">
                             <mat-icon>add</mat-icon>
@@ -95,7 +95,6 @@ import {requiredLengthValidator} from '../../shared/validators/requiredLength.va
                             <fd-inps [formControlName]="i"></fd-inps>
                         </ng-container>
                     </ng-container>
-
                     <div class="mat-form-field d-block col-md-4 mb-2">
                         <button mat-raised-button color="primary" class="ms-2 w-100">
                             Effettua
