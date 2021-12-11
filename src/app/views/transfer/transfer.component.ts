@@ -1,5 +1,5 @@
-import {Component, OnInit} from '@angular/core';
-import {FormBuilder, Validators} from '@angular/forms';
+import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {MatDialog} from '@angular/material/dialog';
 import {Contact} from '../../models/contact.model';
 import {ContactsComponent} from './contacts/contacts.component';
@@ -12,6 +12,8 @@ import {Transfer} from '../../models/transfer.model';
 import {CardsService} from '../../api/cards.service';
 import {Card} from '../../models/card.model';
 import {formReset} from '../../shared/utils/material-forms.utils.ts';
+import {amountValidator} from '../../shared/validators/amount.validator';
+import {TransferValidator} from '../../shared/validators/transfer.validator';
 
 @Component({
     selector: 'fd-transfer',
@@ -44,24 +46,33 @@ import {formReset} from '../../shared/utils/material-forms.utils.ts';
                             IBAN <strong>richiesto</strong>
                         </mat-error>
                     </mat-form-field>
-                    <mat-form-field appearance="fill" class="d-block mb-2">
-                        <mat-label>Importo</mat-label>
-                        <input type="number" formControlName="amount" matInput>
-                        <mat-error *ngIf="amount!.hasError('required')">
-                            Importo <strong>richiesto</strong>
-                        </mat-error>
-                    </mat-form-field>
-                    <mat-form-field appearance="fill" class="d-block mb-2">
-                        <mat-label>Seleziona carta</mat-label>
-                        <mat-select formControlName="cardId">
-                            <mat-option [value]="card._id" *ngFor="let card of cards$ | async">
-                                {{card.number}}
-                            </mat-option>
-                        </mat-select>
-                        <mat-error *ngIf="cardId!.hasError('required')">
-                            Selezione della carta <strong>richiesta</strong>
-                        </mat-error>
-                    </mat-form-field>
+                    <ng-container formGroupName="amountCardId">
+                        <mat-form-field appearance="fill" class="d-block mb-2">
+                            <mat-label>Importo</mat-label>
+                            <input type="text" formControlName="amount" matInput>
+                            <mat-error *ngIf="amount!.hasError('required')">
+                                Importo <strong>richiesto</strong>
+                            </mat-error>
+                            <mat-error *ngIf="!amount!.hasError('required') && amount!.errors?.amount">
+                                <strong>{{amount!.errors?.amount}}</strong>
+                            </mat-error>
+                            <mat-error *ngIf="amountCardId!.errors?.amountUnavailable">
+                                <strong>{{amountCardId!.errors?.amountUnavailable}}</strong>
+                            </mat-error>
+                            <mat-hint *ngIf="amountCardId.pending">Controllo importo...</mat-hint>
+                        </mat-form-field>
+                        <mat-form-field appearance="fill" class="d-block mb-2">
+                            <mat-label>Seleziona carta</mat-label>
+                            <mat-select formControlName="cardId">
+                                <mat-option [value]="card._id" *ngFor="let card of cards$ | async">
+                                    {{card.number}}
+                                </mat-option>
+                            </mat-select>
+                            <mat-error *ngIf="cardId!.hasError('required')">
+                                Selezione della carta <strong>richiesta</strong>
+                            </mat-error>
+                        </mat-form-field>
+                    </ng-container>
                     <button mat-raised-button color="primary" class="w-100" [disabled]="!transferForm.valid">Traferisci
                         denaro
                     </button>
@@ -69,18 +80,19 @@ import {formReset} from '../../shared/utils/material-forms.utils.ts';
             </div>
         </mat-card>
     `,
-    styles: []
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TransferComponent implements OnInit {
-
     cards$ = new BehaviorSubject<Card[]>([]);
 
     transferForm = this.fb.group({
         name: ['', Validators.required],
         surname: ['', Validators.required],
         iban: ['', Validators.required],
-        amount: ['', Validators.required],
-        cardId: ['', Validators.required]
+        amountCardId: this.fb.group({
+            amount: ['', [Validators.required, amountValidator]],
+            cardId: ['', Validators.required]
+        }, {asyncValidators: this.transferValidator.transferValidator()})
     })
 
     get name() {
@@ -96,21 +108,24 @@ export class TransferComponent implements OnInit {
     }
 
     get amount() {
-        return this.transferForm.get('amount');
+        return this.transferForm.get('amountCardId.amount');
     }
 
     get cardId() {
-        return this.transferForm.get('cardId');
+        return this.transferForm.get('amountCardId.cardId');
     }
 
+    get amountCardId() {
+        return this.transferForm.get('amountCardId') as FormGroup;
+    }
 
     constructor(private fb: FormBuilder,
                 private dialog: MatDialog,
                 private snackBar: MatSnackBar,
                 private contactService: ContactsService,
                 private transferService: TransferService,
-                private cardService: CardsService) {
-
+                private cardService: CardsService,
+                private transferValidator: TransferValidator) {
     }
 
     ngOnInit(): void {
@@ -136,12 +151,20 @@ export class TransferComponent implements OnInit {
 
     submit() {
         if (this.transferForm.valid) {
-            this.transferService.createTransfer(this.transferForm.value as Transfer).subscribe(success => {
+            const {name, surname, iban, amountCardId: {amount, cardId}} = this.transferForm.value;
+            this.transferService.createTransfer({
+                name,
+                surname,
+                iban,
+                amount,
+                cardId
+            } as Transfer).subscribe(success => {
                 const msg = success
                     ? 'Trasferimento completato'
                     : 'Si sono verificati errori durante il trasferimento';
                 this.snackBar.open(msg, undefined, {duration: 2000});
                 formReset(this.transferForm);
+                formReset(this.amountCardId);
             });
         }
     }

@@ -9,4 +9,5 @@ export const formReset = (form: FormGroup) => {
     Object.keys(form.controls).forEach(key => {
         form?.get(key)?.setErrors(null);
     });
+    form.updateValueAndValidity();
 }

@@ -1,7 +1,7 @@
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {RequiredLengthValidatorDirective} from './requiredLength.validator';
-import {EqualFieldValidatorDirective} from './equalFieldsValidator.validator';
+import {RequiredLengthValidatorDirective} from './required-length.validator';
+import {EqualFieldValidatorDirective} from './equal-fields.validator';
 
 const VALIDATORS = [RequiredLengthValidatorDirective, EqualFieldValidatorDirective];
 

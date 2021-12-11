@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, EventEmitter, OnInit, Output} from '@angular/core';
 import {
     ControlValueAccessor,
     FormBuilder,
@@ -26,6 +26,9 @@ import {Erario} from '../../../models/tax.model';
                 <mat-label>Importo credito</mat-label>
                 <input type="number" formControlName="importoCredito" matInput>
             </mat-form-field>
+            <div class="mat-form-field">
+                <mat-icon class="text-danger pointer" (click)="cancel.emit()">delete</mat-icon>
+            </div>
         </form>
     `,
     providers: [
@@ -38,6 +41,8 @@ import {Erario} from '../../../models/tax.model';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErarioComponent implements ControlValueAccessor, OnInit {
+    @Output() cancel = new EventEmitter<void>();
+
     erarioForm = this.fb.group({
         codiceTributo: [''],
         annoRif: [''],

@@ -1,6 +1,6 @@
-import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, EventEmitter, OnInit, Output} from '@angular/core';
 import {ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR} from '@angular/forms';
-import {Inps} from '../../../models/tax.model';
+import {Erario, Inps} from '../../../models/tax.model';
 
 @Component({
     selector: 'fd-inps',
@@ -38,6 +38,9 @@ import {Inps} from '../../../models/tax.model';
                 <mat-label>Causale Contributo</mat-label>
                 <input formControlName="causaleContributo" class="pe-4" matInput>
             </mat-form-field>
+            <div class="mat-form-field">
+                <mat-icon class="text-danger pointer" (click)="cancel.emit()">delete</mat-icon>
+            </div>
         </form>
     `,
     providers: [
@@ -50,20 +53,26 @@ import {Inps} from '../../../models/tax.model';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InpsComponent implements ControlValueAccessor, OnInit {
+    @Output() cancel = new EventEmitter<void>();
+
     inpsForm = this.fb.group({
         codiceSede: [''],
         causaleContributo: [''],
         codiceInps: [''],
         dataDa: [''],
         dataA: [''],
-        debito: [''],
-        credito: ['']
+        debito: [0],
+        credito: [0]
     });
 
     constructor(private fb: FormBuilder) {
     }
 
     ngOnInit(): void {
+        this.inpsForm.valueChanges.subscribe(inps => {
+            this.onChange(inps as Inps);
+            this.onTouched();
+        })
     }
 
     // Control Value Accessor

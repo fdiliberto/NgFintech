@@ -1,6 +1,5 @@
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {NavbarComponent} from './components/navbar.component';
 import {WelcomeComponent} from './components/welcome.component';
 import {MaterialModule} from './material.module';
 import {RouterModule} from '@angular/router';
@@ -13,7 +12,7 @@ import {TimeStringPipe} from './pipes/time-string.pipe';
 import {NoDataFoundComponent} from './components/no-data-found.component';
 import {ButtonPaginationComponent} from './components/button-pagination.component';
 
-const COMPONENTS = [NavbarComponent, WelcomeComponent, IntroPageComponent, LeafletMapComponent, NoDataFoundComponent, ButtonPaginationComponent];
+const COMPONENTS = [WelcomeComponent, IntroPageComponent, LeafletMapComponent, NoDataFoundComponent, ButtonPaginationComponent];
 const PIPES = [TruncatePipe, FilterContactsPipe, TimePipe, TimeStringPipe]
 
 @NgModule({

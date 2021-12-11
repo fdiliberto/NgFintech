@@ -5,7 +5,7 @@ import {catchError, exhaustMap, map} from 'rxjs/operators';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {EMPTY, of, Subject, Subscription} from 'rxjs';
 import {HttpErrorResponse} from '@angular/common/http';
-import {equalFieldsValidator} from '../../shared/validators/equalFieldsValidator.validator';
+import {equalFieldsValidator} from '../../shared/validators/equal-fields.validator';
 
 @Component({
     selector: 'fd-register',

@@ -6,6 +6,7 @@ import {BehaviorSubject} from 'rxjs';
 import {Card} from '../../models/card.model';
 import {ActivatedRoute,} from '@angular/router';
 import {map} from 'rxjs/operators';
+import {getBalance} from '../../shared/utils/balance.utils';
 
 export type pagination = { limit: number, offset: number };
 
@@ -86,7 +87,7 @@ export class MovementsComponent implements OnInit {
     }
 
     getBalance(movs: Movement[]) {
-        this.balance = movs.reduce((acc, current) => acc + (current.amount * (current.type === 'out' ? -1 : 1)), 0);
+        this.balance = getBalance(movs); //movs.reduce((acc, current) => acc + (current.amount * (current.type === 'out' ? -1 : 1)), 0);
     }
 
     reset() {

@@ -1,6 +1,7 @@
 import {ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
 import {FormBuilder, Validators} from '@angular/forms';
 import {Contact} from '../../../models/contact.model';
+import {requiredLengthValidator} from '../../../shared/validators/required-length.validator';
 
 @Component({
     selector: 'fd-contact-form',
@@ -28,13 +29,15 @@ import {Contact} from '../../../models/contact.model';
                     <mat-error *ngIf="ibanControl!.hasError('required')">
                         IBAN <strong>richiesto</strong>
                     </mat-error>
+                    <mat-error *ngIf="!ibanControl!.hasError('required') && ibanControl!.errors?.requiredLength">
+                        L'IBAN deve contenere <strong>27 caratteri</strong>
+                    </mat-error>
                 </mat-form-field>
                 <button mat-raised-button color="primary" class="w-100" [disabled]="!contactForm.valid">Salva
                 </button>
             </form>
         </div>
     `,
-    styles: [],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ContactFormComponent implements OnInit {
@@ -45,7 +48,7 @@ export class ContactFormComponent implements OnInit {
     contactForm = this.fb.group({
         name: ['', Validators.required],
         surname: ['', Validators.required],
-        iban: ['', Validators.required],
+        iban: ['', [Validators.required, requiredLengthValidator(27)]],
     });
 
     get nameControl() {

@@ -6,6 +6,7 @@ import {DayWithSlots} from '../../../models/day-with-slots.model';
 import {dateToString} from '../../../shared/utils/date.utils';
 import {from, Observable} from 'rxjs';
 import {filter, map} from 'rxjs/operators';
+import {formReset} from '../../../shared/utils/material-forms.utils.ts';
 
 @Component({
     selector: 'fd-apointment-form',
@@ -85,10 +86,7 @@ export class ApointmentFormComponent {
     }
 
     cleanup() {
-        this.apointmentForm.reset();
-        this.apointmentForm.markAsPristine();
-        this.apointmentForm.markAsUntouched();
-        this.apointmentForm.updateValueAndValidity();
+        formReset(this.apointmentForm);
     }
 
     filterAvailability: DateFilterFn<Date | null> = (date: Date | null) => {

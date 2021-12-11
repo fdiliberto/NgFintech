@@ -1,6 +1,9 @@
-import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component} from '@angular/core';
 import {FormArray, FormBuilder, Validators} from '@angular/forms';
-import {requiredLengthValidator} from '../../shared/validators/requiredLength.validator';
+import {requiredLengthValidator} from '../../shared/validators/required-length.validator';
+import {TaxesService} from '../../api/taxes.service';
+import {Tax} from '../../models/tax.model';
+import {MatSnackBar} from '@angular/material/snack-bar';
 
 @Component({
     selector: 'fd-taxes',
@@ -74,29 +77,31 @@ import {requiredLengthValidator} from '../../shared/validators/requiredLength.va
                     <!-- ERARIO -->
                     <div class="mat-form-field col-md-12 mb-4">
                         <h2 class="fw-bold">Erario</h2>
-                        <button type="button" mat-fab color="warn" aria-label="Aggiungi erario" (click)="addErario()">
+                        <button type="button" mat-fab color="warn" aria-label="Aggiungi erario"
+                                (click)="addErarioOrInps(false)">
                             <mat-icon>add</mat-icon>
                         </button>
                     </div>
                     <ng-container formArrayName="erarioList">
                         <ng-container *ngFor="let e of erarioListControl.controls; let i = index">
-                            <fd-erario [formControlName]="i"></fd-erario>
+                            <fd-erario [formControlName]="i" (cancel)="deleteErarioOrInps(false, i)"></fd-erario>
                         </ng-container>
                     </ng-container>
                     <!-- INPS -->
                     <div class="mat-form-field col-md-12 mb-2">
                         <h2 class="fw-bold">Inps</h2>
-                        <button type="button" mat-fab color="warn" aria-label="Aggiungi inps" (click)="addInps()">
+                        <button type="button" mat-fab color="warn" aria-label="Aggiungi inps"
+                                (click)="addErarioOrInps(true)">
                             <mat-icon>add</mat-icon>
                         </button>
                     </div>
                     <ng-container formArrayName="inpsList">
                         <ng-container *ngFor="let e of inpsListControl.controls; let i = index">
-                            <fd-inps [formControlName]="i"></fd-inps>
+                            <fd-inps [formControlName]="i" (cancel)="deleteErarioOrInps(true, i)"></fd-inps>
                         </ng-container>
                     </ng-container>
-                    <div class="mat-form-field d-block col-md-4 mb-2">
-                        <button mat-raised-button color="primary" class="ms-2 w-100">
+                    <div class="mat-form-field col-md-5 offset-3  mt-3">
+                        <button mat-raised-button color="primary" class="w-100">
                             Effettua
                             pagamento
                         </button>
@@ -104,13 +109,11 @@ import {requiredLengthValidator} from '../../shared/validators/requiredLength.va
                 </form>
             </div>
         </mat-card>
-
-        <pre>{{taxesForm.status | json}}</pre>
+        <!--        <pre>{{taxesForm.status | json}}</pre>-->
     `,
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TaxesComponent implements OnInit {
-
+export class TaxesComponent {
     taxesForm = this.fb.group({
         nome: ['', Validators.required],
         cognome: ['', Validators.required],
@@ -161,28 +164,32 @@ export class TaxesComponent implements OnInit {
         return this.taxesForm.get('inpsList') as FormArray;
     }
 
-    constructor(private fb: FormBuilder) {
+    constructor(private fb: FormBuilder, private taxesService: TaxesService, private snackBar: MatSnackBar) {
     }
 
-    ngOnInit(): void {
-    }
-
-    addErario() {
-        // NOTA: passando il formgroup non funziona!
-        // const erario = this.fb.group({
-        //     codiceTributo: '',
-        //     annoRif: '',
-        //     importoDebito: 0,
-        //     importoCredito: 0
-        // });
-        this.erarioListControl.push(this.fb.control([]));
+    addErarioOrInps(isInps: boolean) {
+        if (isInps) {
+            this.inpsListControl.push(this.fb.control([]));
+        } else {
+            this.erarioListControl.push(this.fb.control([]));
+        }
     }
 
     submit() {
-        console.log(this.taxesForm.valid);
+        if (this.taxesForm.valid) {
+            const tax = this.taxesForm.value as Tax;
+            this.taxesService.payTaxes(tax).subscribe(result => {
+                const msg = result ? 'Pagamento effettuato con successo' : 'Si sono verificati errori. Riprova più tardi.';
+                this.snackBar.open(msg, undefined, {duration: 2000});
+            });
+        }
     }
 
-    addInps() {
-        this.inpsListControl.push(this.fb.control([]));
+    deleteErarioOrInps(isInps: boolean, index: number) {
+        if (isInps) {
+            this.inpsListControl.removeAt(index);
+        } else {
+            this.erarioListControl.removeAt(index);
+        }
     }
 }

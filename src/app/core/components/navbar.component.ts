@@ -47,6 +47,7 @@ import {AuthCookiesService} from '../../core/auth/services/auth-cookies.service'
                 <ng-container *ngIf="userStore.user$ | async as u">
                     <mat-icon class="me-3">person</mat-icon>
                     {{u.displayName}}
+                    <mat-icon class="position-absolute end-0 me-2 text-danger">logout</mat-icon>
                 </ng-container>
             </a>
         </mat-nav-list>

@@ -1,8 +1,14 @@
+import {Movement} from './movements.model';
+
 export interface Card {
-    _id: string;
-    number: string;
-    ownerId: string;
-    owner: string;
     type: 'visa' | 'mastercard';
+    name: string;
+    surname: string;
+    number: string;
+    csc: string;
+    owner: string;
+    ownerId: string;
     amount: number;
+    movements: Movement[];
+    _id: string;
 }

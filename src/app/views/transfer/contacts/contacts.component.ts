@@ -70,12 +70,11 @@ export class ContactsComponent implements OnInit {
             ? this.contactsService.updateContact({...this.contactToEdit, ...contact})
             : this.contactsService.createContact(contact);
 
-        const msg = this.showContactForm
+        const msg = this.contactToEdit
             ? 'Contatto aggiornato con successo'
             : 'Contatto creato con successo';
 
         upInsert$.pipe(
-            delay(1000),
             tap(contact => {
                 this.snackBar.open(msg, undefined, {duration: 2000});
                 return contact;

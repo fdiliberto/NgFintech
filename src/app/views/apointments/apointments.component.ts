@@ -5,7 +5,7 @@ import {MatDrawer} from '@angular/material/sidenav';
 import {MatSelectionList} from '@angular/material/list';
 import {filter, map, switchMap, switchMapTo} from 'rxjs/operators';
 import {DayWithSlots} from '../../models/day-with-slots.model';
-import {BehaviorSubject, Observable, Subscription} from 'rxjs';
+import {BehaviorSubject, Observable, of, Subscription} from 'rxjs';
 import {DayWithSlot} from '../../models/day-with-slot.model';
 import {MatDialog} from '@angular/material/dialog';
 import {ApointmentConfirmDialogComponent} from './apointment-form/apointment-confirm-dialog.component';
@@ -18,8 +18,7 @@ import {ApointmentsService} from '../../api/apointments.service';
         <mat-drawer-container class="bg-transparent">
             <mat-drawer #drawer mode="over" position="end" class="position-fixed overflow-auto w-25"
                         [disableClose]="true">
-                <div class="m-3">
-                    <!-- workaround con if per evitare che il form rimanga validato e mostri gli errori -->
+                <div class="m-3" *ngIf="drawer.opened">
                     <ng-container *ngIf="appointment$ | async as apt">
                         <fd-apointment-form *ngIf="apt.slots.length"
                                             [availability]="apt.slots"
